@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>先生の相談室</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+:root {
+  --ink: #1a1a2e;
+  --paper: #f7f5f0;
+  --warm: #fdf9f2;
+  --accent: #2d6a4f;
+  --accent-light: #d8f3dc;
+  --accent-pale: #f0faf2;
+  --amber: #e07c39;
+  --amber-light: #fde8d8;
+  --sky: #2c6ea8;
+  --sky-light: #ddeeff;
+  --border: #e2ddd6;
+  --muted: #7a7469;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--paper); color: var(--ink);
+  height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* Header */
+header {
+  background: var(--ink); color: #fff;
+  padding: 13px 18px; display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+}
+.header-icon {
+  width: 34px; height: 34px; background: var(--accent);
+  border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 17px;
+}
+.header-title { font-weight: 700; font-size: 16px; letter-spacing: 0.03em; }
+.header-sub { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 1px; }
+#resetBtn {
+  margin-left: auto; background: rgba(255,255,255,0.12);
+  border: none; color: #fff; border-radius: 7px;
+  padding: 5px 11px; font-size: 12px; cursor: pointer; font-family: inherit;
+}
+
+/* API Key area */
+#apiSection {
+  background: #fffbe6; border-bottom: 1px solid #e8d000;
+  padding: 10px 16px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap;
+}
+#apiSection label { font-size: 12px; color: #555; white-space: nowrap; }
+#apiKeyInput {
+  flex: 1; min-width: 160px; border: 1px solid #ccc; border-radius: 6px;
+  padding: 5px 10px; font-size: 13px; font-family: monospace; outline: none;
+}
+#apiKeyInput:focus { border-color: var(--accent); }
+#saveKeyBtn {
+  background: var(--accent); color: #fff; border: none;
+  border-radius: 6px; padding: 5px 12px; font-size: 12px; cursor: pointer; font-family: inherit;
+}
+#apiStatus { font-size: 11px; color: #666; }
+.api-help { font-size: 11px; color: #888; width: 100%; }
+.api-help a { color: var(--sky); }
+
+/* Category tabs */
+.cat-bar {
+  display: flex; gap: 6px; padding: 9px 14px;
+  background: var(--warm); border-bottom: 1px solid var(--border);
+  overflow-x: auto; flex-shrink: 0; scrollbar-width: none;
+}
+.cat-bar::-webkit-scrollbar { display: none; }
+.cat-btn {
+  flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
+  border: 1.5px solid var(--border); background: #fff; color: var(--muted);
+  font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; transition: all 0.15s;
+}
+.cat-btn.active-lesson { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+.cat-btn.active-student { border-color: var(--amber); background: var(--amber-light); color: var(--amber); }
+.cat-btn.active-class { border-color: var(--sky); background: var(--sky-light); color: var(--sky); }
+
+/* Chat */
+#chat {
+  flex: 1; overflow-y: auto; padding: 18px 14px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+#chat::-webkit-scrollbar { width: 4px; }
+#chat::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* Welcome */
+.welcome {
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 16px; padding: 22px 18px; text-align: center;
+}
+.welcome .emoji { font-size: 38px; margin-bottom: 10px; }
+.welcome h2 { font-weight: 700; font-size: 15px; margin-bottom: 6px; }
+.welcome p { font-size: 12px; color: var(--muted); line-height: 1.7; }
+.quick-topics { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 16px; justify-content: center; }
+.quick-btn {
+  background: var(--accent-pale); border: 1px solid var(--accent-light);
+  color: var(--accent); font-size: 11.5px; padding: 6px 12px;
+  border-radius: 20px; cursor: pointer; font-family: inherit;
+}
+
+/* Bubbles */
+.msg { display: flex; gap: 10px; align-items: flex-start; }
+.msg.user { flex-direction: row-reverse; }
+.avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;
+}
+.msg.user .avatar { background: var(--accent); color: #fff; }
+.msg.ai .avatar   { background: var(--ink); color: #fff; }
+.bubble { padding: 11px 14px; border-radius: 16px; font-size: 13.5px; line-height: 1.7; max-width: 85%; }
+.msg.user .bubble  { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; white-space: pre-wrap; }
+.msg.ai .bubble    { background: #fff; border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+.msg.error .bubble { background: #fff3f3; border: 1px solid #ffcccc; color: #c0392b; border-bottom-left-radius: 4px; }
+
+/* AI content */
+.ai-label {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+  padding: 2px 8px; border-radius: 4px; margin-bottom: 8px;
+}
+.label-advice { background: var(--accent-light); color: var(--accent); }
+.label-steps  { background: var(--sky-light); color: var(--sky); }
+.label-check  { background: var(--amber-light); color: var(--amber); }
+.label-warn   { background: #ffe4e4; color: #c0392b; }
+.ai-summary { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+.ai-divider { border: none; border-top: 1px dashed var(--border); margin: 10px 0; }
+.steps-list { list-style: none; padding: 0; }
+.steps-list li { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; font-size: 13px; line-height: 1.65; }
+.step-num {
+  flex-shrink: 0; width: 22px; height: 22px; background: var(--sky); color: #fff;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; margin-top: 1px;
+}
+.check-list { list-style: none; padding: 0; }
+.check-item { display: flex; gap: 9px; align-items: flex-start; margin-bottom: 6px; cursor: pointer; font-size: 13px; line-height: 1.65; }
+.check-box {
+  flex-shrink: 0; width: 18px; height: 18px; border: 2px solid var(--amber);
+  border-radius: 4px; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; margin-top: 2px; transition: all 0.15s; color: transparent;
+}
+.check-item.done .check-box { background: var(--amber); color: #fff; }
+.check-item.done span { text-decoration: line-through; color: var(--muted); }
+.warn-list { list-style: none; padding: 0; }
+.warn-list li { display: flex; gap: 8px; margin-bottom: 6px; font-size: 13px; line-height: 1.65; }
+.warn-bullet { color: #c0392b; flex-shrink: 0; }
+.advice-text { font-size: 13px; line-height: 1.75; white-space: pre-wrap; }
+.ai-note { font-size: 12px; color: var(--muted); }
+
+/* Typing */
+.typing { display: flex; gap: 5px; align-items: center; padding: 4px 0; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: bounce 1.2s infinite ease-in-out; }
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%,80%,100%{transform:translateY(0);opacity:0.4} 40%{transform:translateY(-6px);opacity:1} }
+
+/* Input */
+.input-area {
+  padding: 11px 14px 15px; background: var(--warm);
+  border-top: 1px solid var(--border); flex-shrink: 0;
+}
+.input-row {
+  display: flex; gap: 9px; align-items: flex-end;
+  background: #fff; border: 1.5px solid var(--border); border-radius: 13px; padding: 9px 11px;
+}
+#userInput {
+  flex: 1; border: none; outline: none; resize: none; font-family: inherit;
+  font-size: 14px; line-height: 1.6; color: var(--ink); background: transparent;
+  max-height: 120px; min-height: 22px;
+}
+#userInput::placeholder { color: #b5b0a8; }
+#sendBtn {
+  width: 34px; height: 34px; flex-shrink: 0; background: var(--accent);
+  border: none; border-radius: 8px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; color: #fff; transition: all 0.15s;
+}
+#sendBtn:disabled { background: var(--border); cursor: not-allowed; }
+.input-hint { font-size: 11px; color: #9a9490; text-align: center; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-icon">📚</div>
+  <div>
+    <div class="header-title">先生の相談室</div>
+    <div class="header-sub">困ったことをAIに相談できます</div>
+  </div>
+  <button id="resetBtn" onclick="resetChat()">＋ 新しい相談</button>
+</header>
+
+<div id="apiSection">
+  <label>🔑 Gemini APIキー:</label>
+  <input type="password" id="apiKeyInput" placeholder="AIza..." />
+  <button id="saveKeyBtn" onclick="saveKey()">保存</button>
+  <span id="apiStatus"></span>
+  <div class="api-help">
+    キーの取得: <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a> → 「Create API key」（無料・カード不要）
+  </div>
+</div>
+
+<div class="cat-bar">
+  <button class="cat-btn active-lesson" data-cat="lesson" onclick="setCategory(this)">📖 授業・学習指導</button>
+  <button class="cat-btn" data-cat="student" onclick="setCategory(this)">👥 生徒・保護者対応</button>
+  <button class="cat-btn" data-cat="class" onclick="setCategory(this)">🏫 学級経営・行事</button>
+</div>
+
+<div id="chat"></div>
+
+<div class="input-area">
+  <div class="input-row">
+    <textarea id="userInput" rows="1" placeholder="困っていることを書いてください…"></textarea>
+    <button id="sendBtn" onclick="sendMessage()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </div>
+  <div class="input-hint">Enter で送信 ／ Shift+Enter で改行</div>
+</div>
+
+<script>
+const QUICK_TOPICS = {
+  lesson:  ["授業中に集中しない子への対処法","学力差が大きいクラスの指導","テストの点が低い子のフォロー","グループワークがうまくいかない","授業の導入がうまくいかない"],
+  student: ["いじめの疑いがある場面","不登校傾向の生徒への対応","保護者からのクレーム対応","授業中に泣き出した子","友人関係のトラブル仲裁"],
+  class:   ["給食中がうるさくて困っている","係活動が機能していない","運動会の役割分担でもめている","クラスの雰囲気が暗い","掃除をさぼる子が多い"],
+};
+const CAT_LABEL = { lesson:"📖 授業・学習指導", student:"👥 生徒・保護者対応", class:"🏫 学級経営・行事" };
+
+const SYSTEM_INSTRUCTION = `あなたは小学校・中学校の教員向けの相談AIです。
+教員が抱える「授業・学習指導」「生徒・保護者対応」「学級経営・行事」に関する困りごとに対して、実践的なアドバイスをします。
+
+回答は必ず以下のフォーマットで返してください：
+
+[SUMMARY]
+状況の簡潔な理解（1〜2文）
+
+[ADVICE]
+ラベル: アドバイスのタイトル
+アドバイスの本文をここに書く
+
+[STEPS]
+ラベル: 手順のタイトル
+1. 最初にすること
+2. 次にすること
+3. その次
+
+[CHECKLIST]
+ラベル: チェックリストのタイトル
+- 確認項目1
+- 確認項目2
+
+[WARNING]
+ラベル: 注意点のタイトル
+- 注意事項1
+
+[NOTE]
+締めの一言（短く・省略可）
+
+ルール：
+- [SUMMARY]は必ず含める
+- [ADVICE][STEPS][CHECKLIST][WARNING]は状況に応じて選ぶ（複数可）
+- 緊急性・手順が重要なら[STEPS]を使う
+- 準備・確認が必要なら[CHECKLIST]を使う
+- 注意が必要なときのみ[WARNING]を使う
+- 日本語で丁寧に、現場目線で書く`;
+
+let currentCat = 'lesson';
+let history = []; // Gemini形式: [{role:'user',parts:[{text:'...'}]}, {role:'model',parts:[{text:'...'}]}]
+
+// APIキー管理
+function saveKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key || key.startsWith('●')) {
+    document.getElementById('apiStatus').textContent = '⚠️ キーを入力してください';
+    return;
+  }
+  localStorage.setItem('gemini_api_key', key);
+  document.getElementById('apiStatus').textContent = '✅ 保存しました';
+  document.getElementById('apiKeyInput').value = '●'.repeat(20);
+}
+function getKey() { return localStorage.getItem('gemini_api_key') || ''; }
+
+window.addEventListener('load', () => {
+  if (getKey()) {
+    document.getElementById('apiKeyInput').value = '●'.repeat(20);
+    document.getElementById('apiStatus').textContent = '✅ 保存済み';
+  }
+  renderWelcome();
+});
+
+// カテゴリ切り替え
+function setCategory(btn) {
+  document.querySelectorAll('.cat-btn').forEach(b => b.className = 'cat-btn');
+  currentCat = btn.dataset.cat;
+  btn.classList.add('active-' + currentCat);
+  if (document.getElementById('welcomeCard')) renderWelcome();
+}
+
+// ウェルカム
+function renderWelcome() {
+  document.getElementById('welcomeCard')?.remove();
+  const div = document.createElement('div');
+  div.className = 'welcome'; div.id = 'welcomeCard';
+  div.innerHTML = `
+    <div class="emoji">🤝</div>
+    <h2>何か困っていることはありますか？</h2>
+    <p>カテゴリーを選んで、気になることをそのまま書いてください。<br>状況に応じてアドバイス・手順・チェックリストでお答えします。</p>
+    <div class="quick-topics">
+      ${QUICK_TOPICS[currentCat].map(t=>`<button class="quick-btn" onclick="sendQuick('${t.replace(/'/g,"&#39;")}')">${t}</button>`).join('')}
+    </div>`;
+  document.getElementById('chat').insertBefore(div, document.getElementById('chat').firstChild);
+}
+
+function sendQuick(text) {
+  document.getElementById('userInput').value = text;
+  sendMessage();
+}
+
+// レスポンスのパース
+function parseResponse(text) {
+  const sections = [];
+  let summary = '', note = '', type = null, label = '', items = [], content = '';
+
+  function flush() {
+    if (!type) return;
+    if (type==='ADVICE' && content) sections.push({type:'advice', label:label||'アドバイス', content:content.trim()});
+    else if (type==='STEPS' && items.length) sections.push({type:'steps', label:label||'対応手順', content:[...items]});
+    else if (type==='CHECKLIST' && items.length) sections.push({type:'checklist', label:label||'確認リスト', content:[...items]});
+    else if (type==='WARNING' && items.length) sections.push({type:'warning', label:label||'注意点', content:[...items]});
+    type=null; label=''; items=[]; content='';
+  }
+
+  for (const line of text.split('\n')) {
+    const t = line.trim();
+    if (!t) continue;
+    if (t==='[SUMMARY]')   { flush(); type='SUMMARY'; continue; }
+    if (t==='[ADVICE]')    { flush(); type='ADVICE';  continue; }
+    if (t==='[STEPS]')     { flush(); type='STEPS';   continue; }
+    if (t==='[CHECKLIST]') { flush(); type='CHECKLIST'; continue; }
+    if (t==='[WARNING]')   { flush(); type='WARNING'; continue; }
+    if (t==='[NOTE]')      { flush(); type='NOTE';    continue; }
+    if (type==='SUMMARY') { summary+=(summary?' ':'')+t; continue; }
+    if (type==='NOTE')    { note+=(note?' ':'')+t;    continue; }
+    if (t.startsWith('ラベル:')) { label=t.replace('ラベル:','').trim(); continue; }
+    if (type==='ADVICE') { content+=(content?'\n':'')+t; }
+    else if (type==='STEPS') {
+      const m=t.match(/^\d+[\.\)]\s*(.+)/);
+      items.push(m?m[1]:(t.startsWith('-')?t.slice(1).trim():t));
+    } else if (type==='CHECKLIST'||type==='WARNING') {
+      const c=t.startsWith('-')?t.slice(1).trim():t;
+      if(c) items.push(c);
+    }
+  }
+  flush();
+  if (!sections.length) sections.push({type:'advice', label:'アドバイス', content:text});
+  return { summary, sections, note };
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function buildAIBubble(data) {
+  let html = '';
+  if (data.summary) html += `<div class="ai-summary">${esc(data.summary)}</div>`;
+  data.sections.forEach((sec, i) => {
+    if (i>0) html += '<hr class="ai-divider">';
+    if (sec.type==='advice') {
+      html += `<div class="ai-label label-advice">💡 ${esc(sec.label)}</div><div class="advice-text">${esc(sec.content)}</div>`;
+    } else if (sec.type==='steps') {
+      html += `<div class="ai-label label-steps">📋 ${esc(sec.label)}</div><ul class="steps-list">`;
+      sec.content.forEach((s,idx) => { html += `<li><div class="step-num">${idx+1}</div><span>${esc(s)}</span></li>`; });
+      html += '</ul>';
+    } else if (sec.type==='checklist') {
+      const uid = 'c'+Math.random().toString(36).slice(2);
+      html += `<div class="ai-label label-check">✅ ${esc(sec.label)}</div><ul class="check-list">`;
+      sec.content.forEach((c,idx) => {
+        html += `<li class="check-item" id="${uid}_${idx}" onclick="toggleCheck('${uid}_${idx}')"><div class="check-box">✓</div><span>${esc(c)}</span></li>`;
+      });
+      html += '</ul>';
+    } else if (sec.type==='warning') {
+      html += `<div class="ai-label label-warn">⚠️ ${esc(sec.label)}</div><ul class="warn-list">`;
+      sec.content.forEach(c => { html += `<li><span class="warn-bullet">▸</span><span>${esc(c)}</span></li>`; });
+      html += '</ul>';
+    }
+  });
+  if (data.note) html += `<hr class="ai-divider"><div class="ai-note">${esc(data.note)}</div>`;
+  return html;
+}
+
+function toggleCheck(id) { document.getElementById(id)?.classList.toggle('done'); }
+
+function scrollChat() { setTimeout(()=>{ const c=document.getElementById('chat'); c.scrollTop=c.scrollHeight; },50); }
+
+function addMsg(type, content) {
+  document.getElementById('welcomeCard')?.remove();
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  if (type==='user') {
+    div.className='msg user';
+    div.innerHTML=`<div class="avatar">👤</div><div class="bubble">${esc(content)}</div>`;
+  } else if (type==='typing') {
+    div.className='msg ai'; div.id='typingMsg';
+    div.innerHTML=`<div class="avatar">🤖</div><div class="bubble"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  } else if (type==='ai') {
+    div.className='msg ai';
+    div.innerHTML=`<div class="avatar">🤖</div><div class="bubble">${buildAIBubble(content)}</div>`;
+  } else if (type==='error') {
+    div.className='msg error';
+    div.innerHTML=`<div class="avatar">🤖</div><div class="bubble">⚠️ ${esc(content)}</div>`;
+  }
+  chat.appendChild(div);
+  scrollChat();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const apiKey = getKey();
+  if (!apiKey) { alert('APIキーを入力して「保存」してください。'); return; }
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+
+  addMsg('user', text);
+
+  // Gemini形式の履歴に追加
+  history.push({ role:'user', parts:[{ text:`【カテゴリー: ${CAT_LABEL[currentCat]}】\n${text}` }] });
+  addMsg('typing');
+
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+        contents: history,
+        generationConfig: { maxOutputTokens: 1500, temperature: 0.7 },
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data?.error?.message || `HTTP ${res.status}`);
+    }
+
+    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (!rawText) throw new Error('空の返答が来ました');
+
+    history.push({ role:'model', parts:[{ text: rawText }] });
+    document.getElementById('typingMsg')?.remove();
+    addMsg('ai', parseResponse(rawText));
+
+  } catch(e) {
+    document.getElementById('typingMsg')?.remove();
+    addMsg('error', e.message);
+  }
+
+  document.getElementById('sendBtn').disabled = false;
+  input.focus();
+}
+
+function resetChat() {
+  history = [];
+  document.getElementById('chat').innerHTML = '';
+  renderWelcome();
+}
+
+// textarea
+const ta = document.getElementById('userInput');
+ta.addEventListener('input', () => {
+  ta.style.height = 'auto';
+  ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+});
+ta.addEventListener('keydown', e => {
+  if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+</script>
+</body>
+</html>
